@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>7 STAR AI VIDEO MAKER</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 15px;
+      background: #0d1117;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      text-align: center;
+    }
+    .container {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      max-width: 480px;
+      margin: auto;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    h1 {
+      color: #ffcc00;
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    p {
+      color: #8b949e;
+      font-size: 14px;
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      text-align: left;
+      font-size: 13px;
+      margin-top: 10px;
+      color: #c9d1d9;
+    }
+    input, select, textarea, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 5px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      box-sizing: border-box;
+      font-size: 15px;
+      background: #0d1117;
+      color: #fff;
+    }
+    button.btn-primary {
+      background: #ffcc00;
+      color: #000;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    button.btn-download {
+      background: #238636;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      cursor: pointer;
+      display: none;
+      margin-top: 10px;
+    }
+    #previewCanvas {
+      width: 100%;
+      max-height: 380px;
+      background: #000;
+      border-radius: 8px;
+      margin-top: 15px;
+      border: 1px solid #30363d;
+    }
+    #status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #58a6ff;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>★ 7 STAR VIDEO MAKER ★</h1>
+  <p>Apne food items ka animated video ad banayein</p>
+
+  <label>Item Name (Jaise: Veg Momos, Burger)</label>
+  <input type="text" id="itemName" value="Kurkure Momos">
+
+  <label>Special Offer / Catchline</label>
+  <input type="text" id="offerText" value="Khao toh swaad yaad rahe!">
+
+  <label>Price ya Extra Info</label>
+  <input type="text" id="priceText" value="Starting @ ₹50 Only">
+
+  <label>Background Theme Color</label>
+  <select id="themeColor">
+    <option value="#0f2027">Dark Blue Gradient</option>
+    <option value="#800000">Spicy Red</option>
+    <option value="#1a1a1a">Matte Black</option>
+  </select>
+
+  <button class="btn-primary" id="renderBtn" onclick="startVideoGeneration()">🎬 MAKE VIDEO NOW</button>
+  <div id="status"></div>
+
+  <canvas id="previewCanvas" width="720" height="1280"></canvas>
+  <button class="btn-download" id="downloadBtn" onclick="downloadVideo()">⬇ DOWNLOAD VIDEO (.webm)</button>
+</div>
+
+<script>
+  let recordedChunks = [];
+  let mediaRecorder;
+  let recordedVideoUrl = "";
+
+  function startVideoGeneration() {
+    const itemName = document.getElementById("itemName").value.trim() || "Delicious Food";
+    const offerText = document.getElementById("offerText").value.trim() || "Best Taste in Town";
+    const priceText = document.getElementById("priceText").value.trim() || "Special Offer";
+    const themeColor = document.getElementById("themeColor").value;
+    const status = document.getElementById("status");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const renderBtn = document.getElementById("renderBtn");
+
+    downloadBtn.style.display = "none";
+    renderBtn.disabled = true;
+    status.innerText = "⏳ Video ban rahi hai... Kripya 6 second rukein";
+
+    const canvas = document.getElementById("previewCanvas");
+    const ctx = canvas.getContext("2d");
+
+    // Audio narration setup (Speech Synthesis)
+    const narrationText = `Welcome to 7 Star Food! Try our special ${itemName}. ${offerText}. ${priceText}. Aaj hi order karein!`;
+    const utterance = new SpeechSynthesisUtterance(narrationText);
+    utterance.lang = "hi-IN";
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+
+    // Canvas stream recording
+    const stream = canvas.captureStream(30);
+    recordedChunks = [];
+    try {
+      mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    } catch (e) {
+      mediaRecorder = new MediaRecorder(stream);
+    }
+
+    mediaRecorder.ondataavailable = function(e) {
+      if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+
+    mediaRecorder.onstop = function() {
+      const blob = new Blob(recordedChunks, { type: "video/webm" });
+      recordedVideoUrl = URL.createObjectURL(blob);
+      status.innerText = "✅ Video Ready! Neeche button se download karein.";
+      downloadBtn.style.display = "block";
+      renderBtn.disabled = false;
+    };
+
+    mediaRecorder.start();
+
+    // 6-Second Animated Scenes
+    let frame = 0;
+    const totalFrames = 180; // 30 FPS * 6 sec
+
+    function draw() {
+      if (frame >= totalFrames) {
+        mediaRecorder.stop();
+        return;
+      }
+
+      // Background Gradient
+      let gradient = ctx.createLinearGradient(0, 0, 720, 1280);
+      gradient.addColorStop(0, themeColor);
+      gradient.addColorStop(1, "#000000");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 720, 1280);
+
+      // Gold Border Frame
+      ctx.strokeStyle = "#ffcc00";
+      ctx.lineWidth = 14;
+      ctx.strokeRect(20, 20, 680, 1240);
+
+      // Branding Header
+      ctx.fillStyle = "#ffcc00";
+      ctx.font = "bold 44px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("★ 7 STAR FOOD ★", 360, 120);
+
+      // Animated Scene Logic
+      if (frame < 60) {
+        // Scene 1: Item Intro
+        let scale = Math.min(1.2, 0.7 + (frame / 50));
+        ctx.save();
+        ctx.translate(360, 520);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 56px Arial";
+        ctx.fillText(itemName.toUpperCase(), 0, 0);
+        ctx.restore();
+
+        ctx.fillStyle = "#00d2d3";
+        ctx.font = "34px Arial";
+        ctx.fillText("HOT & FRESH", 360, 680);
+
+      } else if (frame < 120) {
+        // Scene 2: Offer & Taste
+        ctx.fillStyle = "#ffcc00";
+        ctx.font = "bold 50px Arial";
+        ctx.fillText(itemName.toUpperCase(), 360, 420);
+
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 42px Arial";
+        ctx.fillText(offerText, 360, 560);
+
+        ctx.fillStyle = "#ff4757";
+        ctx.font = "36px Arial";
+        ctx.fillText("Zabardast Swaad!", 360, 680);
+
+      } else {
+        // Scene 3: Price & Call to Action
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "bold 48px Arial";
+        ctx.fillText(itemName.toUpperCase(), 360, 380);
+
+        // Price Badge Box
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillRect(160, 470, 400, 100);
+        ctx.fillStyle = "#000000";
+        ctx.font = "bold 44px Arial";
+        ctx.fillText(priceText, 360, 535);
+
+        ctx.fillStyle = "#2ed573";
+        ctx.font = "bold 38px Arial";
+        ctx.fillText("ORDER NOW!", 360, 700);
+      }
+
+      // Footer
+      ctx.fillStyle = "#8b949e";
+      ctx.font = "26px Arial";
+      ctx.fillText("Quality Fast Food • 7 Star Food", 360, 1180);
+
+      frame++;
+      requestAnimationFrame(draw);
+    }
+
+    draw();
+  }
+
+  function downloadVideo() {
+    if (!recordedVideoUrl) return;
+    const a = document.createElement("a");
+    a.href = recordedVideoUrl;
+    a.download = "7_star_food_video.webm";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+</script>
+
+</body>
+</html>
